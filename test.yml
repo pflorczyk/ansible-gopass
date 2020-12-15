@@ -1,0 +1,33 @@
+---
+- hosts:
+  - localhost
+  tasks:
+    - name: Fail if secret doesn't exist
+      debug:
+        msg: "{{ lookup('gopass', 'test/a')}}"
+      ignore_errors: yes
+    - name: Create secret with specified password length
+      debug:
+        msg: "{{ lookup('gopass', 'test/b', generate=True, length=99) }}"
+    - name: Create secret with default password length
+      debug:
+        msg: "{{ lookup('gopass', 'test/c', generate=True)}}"
+    - name: Lookup existing secret.
+      debug:
+        msg: "{{ lookup('gopass', 'test/c') }}"
+    - name: Add subkey.
+      debug:
+        msg: "{{ lookup('gopass', 'test/c', subkey='aaa', value='123', overwrite=True) }}"
+    - name: Lookup existing subkey. Print warning
+      debug:
+        msg: "{{ lookup('gopass', 'test/c', subkey='aaa', value='321') }}"
+    - name: Lookup existing subkey. Update
+      debug:
+        msg: "{{ lookup('gopass', 'test/c', subkey='aaa', value='321', overwrite=True) }}"
+    - name: Lookup missing subkey. Fail
+      debug:
+        msg: "{{ lookup('gopass', 'test/c', subkey='bbb') }}"
+      ignore_errors: yes
+    - name: Add random subkey.
+      debug:
+        msg: "{{ lookup('gopass', 'test/c', subkey='ccc', generate=True) }}"
