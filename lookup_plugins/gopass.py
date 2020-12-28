@@ -60,6 +60,7 @@ class LookupModule(LookupBase):
         generate = kwargs.get('generate', False)
         length = kwargs.get('length', 24)
         overwrite = kwargs.get('overwrite', False)
+        check_mode = variables.get('ansible_check_mode', False)
 
         try:
             subkey_value = get_secret(secret, subkey)
@@ -68,18 +69,28 @@ class LookupModule(LookupBase):
                     'gopass: Returned value is different from requested. Add overwrite to update it'
                 )
             elif value and (subkey_value != value) and overwrite:
-                set_secret(secret, subkey, value)
+                if not check_mode:
+                    set_secret(secret, subkey, value)
+                else:
+                    display.warning(
+                        'gopass: ansible_check_mode, not overwriting')
                 subkey_value = value
         except SecretNotFound:
             if generate and not value:
                 password = generate_password(length)
-                set_secret(secret, subkey, password)
+                if not check_mode:
+                    set_secret(secret, subkey, password)
+                else:
+                    display.warning('gopass: ansible_check_mode, not creating')
                 subkey_value = password
             else:
                 if not value:
                     raise AnsibleLookupError(
                         'Unable to find secret: {}'.format(secret))
-                set_secret(secret, subkey, value)
+                if not check_mode:
+                    set_secret(secret, subkey, value)
+                else:
+                    display.warning('gopass: ansible_check_mode, not creating')
                 subkey_value = value
 
         return [subkey_value]
